@@ -1,0 +1,25 @@
+# Node modules
+node_modules/
+
+# Python virtual environment
+venv/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+
+#next
+.next/
+
+#vscode
+.vscode

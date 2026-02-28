@@ -4,13 +4,37 @@ services:
     build: ./backend
     ports:
       - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lumina:lumina@db:5432/luminalib
+      JWT_SECRET: supersecret
+      STORAGE_BACKEND: local
+      STORAGE_PATH: /data/books
+      LLM_PROVIDER: local
+    volumes:
+      - api_data:/data
+    depends_on:
+      - db
   frontend:
     build: ./frontend
     ports:
       - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
   db:
     image: postgres:15
     environment:
       POSTGRES_USER: lumina
       POSTGRES_PASSWORD: lumina
       POSTGRES_DB: luminalib
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  llm:
+    image: python:3.12-slim
+    command: ["tail", "-f", "/dev/null"]
+    # stub service; real implementation would run a local Llama server
+
+volumes:
+  db_data:
+  api_data:
