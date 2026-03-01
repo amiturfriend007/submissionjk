@@ -14,10 +14,15 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/auth/signup", { email, password, full_name: fullName });
+      await api.post("/auth/signup", {
+        email: email.trim(),
+        password,
+        full_name: fullName.trim() || undefined,
+      });
       router.push("/auth/login");
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Signup failed");
+      const detail = err?.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : "Signup failed");
     }
   };
 

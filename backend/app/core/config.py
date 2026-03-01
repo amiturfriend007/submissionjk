@@ -22,10 +22,16 @@ class Settings(BaseSettings):
     s3_region: str = ""
     s3_access_key: str = ""
     s3_secret_key: str = ""
+    s3_endpoint_url: str = ""  # e.g. http://minio:9000 for local MinIO
+    s3_object_prefix: str = "books"
+    s3_create_bucket_if_missing: bool = True
 
     # llm
     llm_provider: str = "local"  # or "openai" etc
-    llm_url: str = "http://localhost:8001"  # example for local llama API
+    llm_url: str = "http://localhost:11434"  # Ollama default
+    llm_model: str = "phi3"
+    llm_timeout_seconds: int = 180
+    llm_max_input_chars: int = 12000
 
     class Config:
         env_file = ".env"

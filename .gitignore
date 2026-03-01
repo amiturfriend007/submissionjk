@@ -23,3 +23,10 @@ __pycache__/
 
 #vscode
 .vscode
+
+#data
+data/
+
+#test.db
+test.db
+backend/test.db

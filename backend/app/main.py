@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, books
+from app.api.routes import auth, books, llm
 from app.db.session import engine
 from app.db.base import Base
 
@@ -17,6 +17,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(books.router, prefix="/books", tags=["books"])
+app.include_router(llm.router, prefix="/llm", tags=["llm"])
 
 
 @app.on_event("startup")

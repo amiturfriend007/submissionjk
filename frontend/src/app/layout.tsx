@@ -23,6 +23,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <a href="/auth/signup" className="text-blue-600">
                 Sign Up
               </a>
+              <a href="/books/new" className="text-blue-600">
+                Upload Book
+              </a>
+              <a href="/llm" className="text-blue-600">
+                LLM Chat
+              </a>
               <a href="/auth/profile" className="text-blue-600">
                 Profile
               </a>

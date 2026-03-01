@@ -19,36 +19,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/login`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencode d",
-        },
-        body:
-          `username=${encodeURIComponent(email)}` +
-          `&password=${encodeURIComponent(password)}`,
-      }
-    );
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || !password) {
+      throw new Error("Email and password are required");
+    }
 
-    const data = await res.json();
+    let data: { access_token?: string };
+    try {
+      const res = await api.post("/auth/login", {
+        email: normalizedEmail,
+        password,
+      });
+      data = res.data;
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || err?.message || "Login failed";
+      throw new Error(typeof detail === "string" ? detail : "Login failed");
+    }
+    if (!data?.access_token) {
+      throw new Error("Login failed: access token missing");
+    }
+
     localStorage.setItem("token", data.access_token);
     setToken(data.access_token);
   };
-// const login = async (email: string, password: string) => {
-//   const res = await fetch("http://localhost:8000/auth/login", {
-//     method: "POST",
+ 
+//  const login = async (email: string, password: string) => {
+//   const params = new URLSearchParams();
+//   params.append("username", email); // OAuth2 expects "username"
+//   params.append("password", password);
+
+//   const res = await api.post("/auth/login", params, {
 //     headers: {
 //       "Content-Type": "application/x-www-form-urlencoded",
 //     },
-//     body: "username=user@example.com&password=1234",
 //   });
 
-//   console.log("STATUS", res.status);
-//   console.log("TEXT", await res.text());
+//   const data = res.data;
+//   if (!data?.access_token) {
+//     throw new Error("Login failed: access token missing");
+//   }
+
+//   localStorage.setItem("token", data.access_token);
+//   setToken(data.access_token);
 // };
-  
+
+// const login = async (email: string, password: string) => {
+//   const body = new URLSearchParams();
+//   body.append("username", email);
+//   body.append("password", password);
+
+//   const res = await api.post(
+//     "/auth/login",
+//     body.toString(), // 👈 important
+//     {
+//       headers: {
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//     }
+//   );
+
+//   const data = res.data;
+//   localStorage.setItem("token", data.access_token);
+//   setToken(data.access_token);
+// };
+ 
   const logout = () => {
     setToken(null);
     localStorage.removeItem("token");

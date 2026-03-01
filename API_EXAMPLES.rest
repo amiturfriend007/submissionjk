@@ -11,9 +11,12 @@ Content-Type: application/json
 
 ### Login
 POST http://localhost:8000/auth/login
-Content-Type: application/x-www-form-urlencoded
+Content-Type: application/json
 
-username=test@example.com&password=password123
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
 
 ### Get Profile (requires Bearer token)
 GET http://localhost:8000/auth/me

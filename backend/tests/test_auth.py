@@ -21,8 +21,32 @@ async def test_signup_and_login(tmp_path, monkeypatch):
 
         login = await ac.post(
             "/auth/login",
-            data={"username": "test@example.com", "password": "secret"},
+            json={"email": "test@example.com", "password": "secret"},
         )
         assert login.status_code == 200
         token = login.json().get("access_token")
         assert token
+
+
+@pytest.mark.asyncio
+async def test_signup_and_login_case_insensitive_email(tmp_path, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        resp = await ac.post(
+            "/auth/signup",
+            json={
+                "email": "MixedCase@Example.com",
+                "password": "secret",
+                "full_name": "Tester",
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["email"] == "mixedcase@example.com"
+
+        login = await ac.post(
+            "/auth/login",
+            json={"email": "mixedcase@example.com", "password": "secret"},
+        )
+        assert login.status_code == 200
+        assert login.json().get("access_token")
