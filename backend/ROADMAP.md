@@ -1,59 +1,44 @@
-# LuminaLib Backend Next Steps for Production
+# Backend Roadmap
 
-This stub implementation provides the foundation for a production-grade library
-system. Here are recommended next steps:
+This roadmap outlines practical next steps for scaling the backend to production reliability.
 
-## 1. LLM Integration
-- Replace `LocalLLM` stub with real provider (Llama 3 via a container or API)
-- Implement structured prompts for summarization and sentiment analysis
-- Add result caching to avoid duplicate processing
+## Phase 1: Production Baseline
 
-## 2. Background Task Queue
-- Integrate Celery + Redis for distributed task processing
-- Move `generate_summary` and `analyze_review` tasks to proper workers
-- Add retry logic and dead-letter handling
+- Integrate Alembic migrations and versioned schema changes
+- Add stricter input validation for uploads and metadata
+- Introduce structured error codes and API versioning (`/v1`)
+- Expand automated integration tests for auth/book/review flows
 
-## 3. Database & ORM Improvements
-- Run Alembic migrations for schema management
-- Add indexes on frequently queried columns (user_id, book_id)
-- Implement soft deletes for audit trails
+## Phase 2: Async and AI Reliability
 
-## 4. Recommendation Algorithm
-- Collect user reading history and preferences
-- Implement content-based filtering (genre/author similarity)
-- Add collaborative filtering once user base grows
-- Cache results with TTL
+- Move background tasks to Celery + Redis (or equivalent)
+- Add retry policies, dead-letter handling, and idempotency guards
+- Implement caching for expensive summary/sentiment operations
+- Add prompt/version tracking for LLM outputs
 
-## 5. File Storage
-- Integrate S3 backend using boto3
-- Add file validation (format, size)
-- Compress and optimize uploaded PDFs/text
+## Phase 3: Storage and Data Scale
 
-## 6. API Enhancements
-- Add pagination to all list endpoints
-- Implement full-text search on book titles/authors
-- Add rate limiting
-- Version the API (/v1/)
-- Implement soft delete with timestamps
+- Implement and validate S3 storage backend
+- Add indexes for high-traffic query paths
+- Add archival and retention policies
+- Define backup/restore drills for PostgreSQL
 
-## 7. Security
-- Enable HTTPS in docker-compose (reverse proxy with nginx)
-- Add CORS configuration
-- Implement request signing for sensitive operations
-- Add audit logging
+## Phase 4: Security and Operations
 
-## 8. Monitoring & Logging
-- Integrate Sentry or similar error tracking
-- Add structured logging (Python logging with JSON output)
-- Monitor database query performance
+- Add rate limiting and abuse controls
+- Harden CORS and auth token lifecycle management
+- Add observability: metrics, tracing, and centralized logs
+- Add deployment health gates and rollback automation
 
-## 9. Testing
-- Expand integration tests with database fixtures
-- Add performance benchmarks for LLM operations
-- Implement load testing
+## Phase 5: Recommendation Maturity
 
-## 10. Frontend Polish
-- Add loading skeletons
-- Implement error boundaries
-- Add offline support with service workers
-- Optimize images and lazy load
+- Expand user preference capture and feature modeling
+- Add ranking strategy with explainability fields
+- Support offline batch generation and cached retrieval
+- Evaluate collaborative filtering once interaction volume grows
+
+## Deliverable Targets
+
+- Stable release candidate with queue-backed async workloads
+- Measurable SLOs for auth and book APIs
+- Documented operational runbooks for incident response

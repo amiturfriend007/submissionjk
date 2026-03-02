@@ -1,207 +1,105 @@
 # LuminaLib
 
-A next-generation intelligent library system built with FastAPI (Python) and
-Next.js (React).  It supports file upload, JWT auth, asynchronous LLM
-summarization, review sentiment analysis, and a pluggable storage/LLM
-architecture.
+LuminaLib is a full-stack intelligent library platform built with FastAPI (backend) and Next.js (frontend).
 
-## Features
+## Core Capabilities
 
-- **JWT-based Authentication**: Stateless, secure token management
-- **Book Management**: Upload and manage book files with metadata
-- **Smart Reviews**: Submit and track review sentiment using LLM
-- **Recommendation Engine**: ML-driven book suggestions based on user preferences
-- **Async Processing**: Background tasks for LLM summarization and sentiment analysis
-- **Abstracted Providers**: Swap storage (local ↔ S3) and LLM backends easily
-- **SSR Frontend**: Next.js with server-side rendering for performance
-- **Docker-Ready**: One-command deployment with `docker-compose`
+- JWT-based authentication and profile management
+- Book upload and metadata management
+- Borrow and return workflows
+- Review creation with sentiment analysis hooks
+- Async task execution for LLM-related processing
+- Extensible provider interfaces for storage and LLM backends
+- Docker Compose setup for local full-stack development
 
-## Getting Started
+## Tech Stack
 
-### Prerequisites
+- Backend: FastAPI, SQLAlchemy (async), PostgreSQL
+- Frontend: Next.js (App Router), React, TypeScript
+- Infrastructure: Docker, Docker Compose
+- Testing: Pytest (backend), Jest/RTL (frontend)
 
-- Docker and Docker Compose installed
-- (Optional) `.env` file for custom configuration
+## Quick Start
 
-### Installation & Running
-
-1. Clone the repository:
+1. Open the project directory:
 
 ```bash
 cd c:\Amit\submissionjk
 ```
 
-2. Create `.env` from template:
+2. Create environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-You can customize JWT_SECRET and other settings if desired.
-
-3. Start all services:
+3. Start the stack:
 
 ```bash
 docker-compose up --build
 ```
 
-This command will:
+## Local URLs
 
-- Build the FastAPI backend
-- Build the Next.js frontend
-- Start PostgreSQL 15
-- Initialize the database
-- Serve the API on `http://localhost:8000`
-- Serve the frontend on `http://localhost:3000`
-- Provide interactive API docs at `http://localhost:8000/docs`
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8000`
+- API Docs: `http://localhost:8000/docs`
 
-## API Documentation
+## Main API Areas
 
-### Core Endpoints
+### Auth
 
-**Authentication**
-- `POST /auth/signup` – Register new user
-- `POST /auth/login` – Get JWT token
-- `GET /auth/me` – Read current user profile
-- `PUT /auth/me` – Update profile
-- `POST /auth/logout` – Logout (client discards token)
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/me`
+- `PUT /auth/me`
+- `POST /auth/logout`
 
-**Books**
-- `POST /books` – Upload book file (triggers async summary)
-- `GET /books?page=1` – List all books with pagination
-- `PUT /books/{id}` – Update book metadata
-- `DELETE /books/{id}` – Remove book and file
-- `POST /books/{id}/borrow` – Borrow a book
-- `POST /books/{id}/return` – Return a borrowed book
-- `POST /books/{id}/reviews` – Create review (only if borrowed)
-- `GET /books/{id}/analysis` – Get aggregated review sentiment
-- `GET /recommendations` – Get personalized book suggestions
+### Books
 
-### Example Requests
-
-See [API_EXAMPLES.rest](./API_EXAMPLES.rest) for detailed request examples.
-
-## Architecture
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed design decisions, including:
-
-- Database schema rationale
-- Asynchronous task handling
-- Recommendation strategy
-- Frontend design and component composition
-- Swappability of storage and LLM providers
+- `POST /books`
+- `GET /books`
+- `PUT /books/{id}`
+- `DELETE /books/{id}`
+- `POST /books/{id}/borrow`
+- `POST /books/{id}/return`
+- `POST /books/{id}/reviews`
+- `GET /books/{id}/analysis`
+- `GET /recommendations`
 
 ## Project Structure
 
-```
+```text
 .
-├── backend/
-│   ├── app/
-│   │   ├── main.py                 # FastAPI app
-│   │   ├── core/                   # Config, security, JWT
-│   │   ├── db/                     # Database models, session
-│   │   ├── api/routes/             # Route handlers
-│   │   ├── schemas/                # Pydantic models
-│   │   ├── services/               # Storage, LLM, recommendations
-│   │   └── tasks/                  # Background jobs
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── tests/                      # Unit tests
-├── frontend/
-│   ├── src/
-│   │   ├── app/                    # Next.js pages
-│   │   ├── components/             # Reusable React components
-│   │   ├── hooks/                  # Custom React hooks
-│   │   ├── services/               # HTTP client abstraction
-│   │   ├── context/                # React Context (Auth)
-│   │   └── components/__tests__/   # Component unit tests
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tailwind.config.js
-│   ├── jest.config.js
-│   ├── Dockerfile
-│   └── next.config.js
-├── docker-compose.yml              # Complete stack orchestration
-├── ARCHITECTURE.md                 # Design documentation
-├── README.md                       # This file
-└── .env.example                    # Template for environment variables
+|-- backend/
+|   |-- app/
+|   |-- tests/
+|   `-- ROADMAP.md
+|-- frontend/
+|   `-- src/
+|-- ARCHITECTURE.md
+|-- DEPLOYMENT_CHECKLIST.md
+|-- REQUIREMENTS_CHECKLIST.md
+|-- EXECUTIVE_SUMMARY.md
+|-- COMPLETION_SUMMARY.md
+`-- docker-compose.yml
 ```
 
-## Environment Variables
+## Documentation
 
-Copy `.env.example` to `.env` and modify as needed:
+- [ARCHITECTURE.md](./ARCHITECTURE.md)
+- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
+- [REQUIREMENTS_CHECKLIST.md](./REQUIREMENTS_CHECKLIST.md)
+- [EXECUTIVE_SUMMARY.md](./EXECUTIVE_SUMMARY.md)
+- [COMPLETION_SUMMARY.md](./COMPLETION_SUMMARY.md)
+- [backend/ROADMAP.md](./backend/ROADMAP.md)
 
-```ini
-# Database (postgres container will use these)
-DATABASE_URL=postgresql+asyncpg://lumina:lumina@db:5432/luminalib
+## Development Notes
 
-# JWT
-JWT_SECRET=change-me
+- Copy `.env.example` to `.env` before running locally.
+- Keep provider selection configurable through environment variables.
+- Prefer async-safe patterns for new backend modules.
 
-# Storage
-STORAGE_BACKEND=local              # or "s3" with appropriate AWS config
-STORAGE_PATH=./data
+## License
 
-# LLM
-LLM_PROVIDER=local                 # or "openai" etc.
-LLM_URL=http://localhost:8001
-```
-
-## Testing
-
-### Backend
-
-```bash
-cd backend
-pytest
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm test
-```
-
-## Development
-
-### Backend
-
-For local development without Docker:
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The dev server will run on `http://localhost:3000`.
-
-## Production Considerations
-
-- Set `JWT_SECRET` to a strong random value
-- Use a managed PostgreSQL service
-- Integrate with a real LLM provider (OpenAI, Hugging Face, etc.)
-- Switch storage backend to AWS S3 or similar
-- Use a real task queue (Celery, RQ) for background jobs
-- Enable CORS appropriately
-- Set up logging and monitoring
-
-## Related Documentation
-
-- [Backend Architecture](./ARCHITECTURE.md)
-- [API Examples](./API_EXAMPLES.rest)
-
----
-
-**LuminaLib** © 2026. A production-grade library system with AI-powered features.
+Internal project for technical assessment use.

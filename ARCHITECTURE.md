@@ -1,97 +1,98 @@
 # LuminaLib Architecture
 
-This document explains high-level architectural choices for the LuminaLib
-intelligent library system.
+This document describes the current architecture and extension points.
 
-## 1. Database Schema
+## 1. System Overview
 
-The schema uses a single relational PostgreSQL database with the following
-tables:
+LuminaLib follows a layered design:
 
-* **users** – holds authentication information (email, hashed_password, etc.).
-* **books** – each record references a stored file path and holds metadata and
-  LLM-generated summary.
-* **borrows** – junction table capturing which user has borrowed which book and
-  when they returned it.
-* **reviews** – user ratings/comments along with an LLM `sentiment_score`.
-* **user_preferences** – simple key/value store used by the recommendation
-  engine.  This design allows arbitrary preferences (genres, authors,
-etc.) without altering the schema.  The rationale was to avoid a complex
-  many‑to‑many relationship and keep the recommendation logic focused on
-  whatever dimensions our algorithm finds useful.
+- Presentation layer: Next.js frontend
+- API layer: FastAPI route handlers
+- Domain/services layer: business rules and provider abstractions
+- Data layer: PostgreSQL with SQLAlchemy async ORM
 
-Rolling consensus (average rating) is stored on-demand when reviews arrive.  We
-could push that into its own table for large scale, but the prototype updates the
-`book.description` for simplicity.
+## 2. Data Model
 
-## 2. Asynchronous LLM Processing
+Primary entities:
 
-FastAPI's `BackgroundTasks` drive asynchronous work.  The API simply registers
-internal coroutine tasks after the request completes, keeping the HTTP layer
-light and stateless.  The tasks run in the same event loop; swapping to a queue
-(e.g. Celery/RabbitMQ) would be a one‑line change in the task module.  The
-storage/LLM/rec modules expose simple interfaces so production can replace
-autonomous services.
+- `users`: identity and authentication metadata
+- `books`: metadata, storage reference, generated summary
+- `borrows`: borrow/return transactions
+- `reviews`: ratings/comments, optional sentiment score
+- `user_preferences`: key/value preferences for recommendation inputs
 
-*Book ingestion* reads the uploaded file synchronously then dispatches
-`generate_summary` in the background.  For real content we’d offload heavy
-parsing to a worker and possibly store intermediary data in an object store.
+Design goals:
 
-*Review analysis* is similar: when a review is created, background tasks trigger
-sentiment analysis and a consensus update.
+- Keep relational integrity for core entities.
+- Allow recommendation features to evolve without frequent schema churn.
 
-## 3. Recommendation Strategy
+## 3. API and Auth
 
-The `user_preferences` table stores arbitrary key/value pairs—think of them as
-feature vectors.  The prototype recommendation endpoint simply returns an empty
-list, but the schema enables both content‑based (matching book metadata to the
-user's saved preferences) and collaborative filtering (aggregating preferences
-over similar users).  Implementing the actual algorithm would involve a
-scheduled job reading these tables, computing similarity, and caching results or
-calling them in real time.
+Auth is JWT-based and stateless.
 
-## 4. Frontend Design Choices
+- Signup/login issue and validate tokens.
+- Protected endpoints resolve `current_user` through dependency injection.
 
-The frontend uses Next.js (app router) to enable SSR on critical pages.  Pages
-are composed of small, testable components; for example, a `BookCard`,
-`ReviewForm`, and `BorrowButton` live in `src/app/components` (not yet added in
-this initial scaffold).  Network calls are abstracted through a `services/api.ts`
-module and wrapped in React Query hooks to manage caching and loading states.  We
-avoid direct `fetch` in components.
+Benefits:
 
-Styling is handled with Tailwind CSS configured via the `tailwind.config.js`
-file (not yet added).  This keeps styles utility‑first and responsive without
-sacrificing consistency.
+- Horizontal scaling without sticky sessions
+- Clear separation of auth concerns in dependency modules
 
-## 5. Swappability & Extensibility
+## 4. Async and Intelligence Workloads
 
-* **Storage**: The `StorageBackend` interface sits in `services/storage.py`. The
-  default `LocalStorage` writes to disk; swapping to AWS S3 only requires
-  implementing the same interface and setting `STORAGE_BACKEND=s3` in the
-  environment.
-* **LLM**: A provider interface in `services/llm.py` allows substituting a local
-  stub with an external API (OpenAI, LLM Node) by implementing `summarize`
-and `analyze_sentiment`.  The provider is selected by the `LLM_PROVIDER`
-config value.
-* **Database**: Using SQLAlchemy's async engine with `Base.metadata.create_all`
-  on startup makes it easy to point at a new Postgres instance or a different
-  database entirely.
+LLM-related operations are triggered asynchronously after request completion:
 
-## 6. Docker & Environment
+- Book summary generation on ingestion
+- Review sentiment processing after submission
 
-A `docker-compose.yml` orchestrates four containers:
+Current behavior is lightweight and suitable for prototype flow. For production scale, move these tasks to a dedicated worker queue.
 
-1. **api** – the FastAPI service exposing `/auth`, `/books`, etc.
-2. **frontend** – the Next.js application.
-3. **db** – PostgreSQL 15 with volume persistence.
-4. **llm** – a placeholder container; in production this would run a llama 3
-   compatible service or proxy to an external LLM.
+## 5. Extensibility
 
-Env vars are managed via `.env` files and passed through compose in the
-`environment` section.  The one‑command start is `docker-compose up --build`.
+### Storage
 
----
+`StorageBackend` defines operations for file persistence.
 
-This architecture balances production‑grade patterns with the simplicity needed
-for an initial proof‑of‑concept.  Clean separation and DI make later extensions
-(such as full ML jobs or a cloud storage migration) straightforward.
+- Default: local disk storage
+- Planned: S3-compatible backend
+
+### LLM
+
+`LLMProvider` defines summarization and sentiment interfaces.
+
+- Default: local/stub provider
+- Planned: external provider integration (for example OpenAI-compatible API)
+
+## 6. Frontend Architecture
+
+The frontend uses Next.js App Router with TypeScript.
+
+- SSR for core listing views
+- Reusable UI components
+- API service abstraction layer
+- Context/hooks for auth and data flow
+
+## 7. Deployment Topology
+
+`docker-compose.yml` orchestrates:
+
+1. `api` (FastAPI)
+2. `frontend` (Next.js)
+3. `db` (PostgreSQL)
+4. `llm` (placeholder service)
+
+Configuration is environment-driven (`.env`).
+
+## 8. Production Hardening Priorities
+
+- Add migrations and schema versioning
+- Add queue-backed task processing
+- Improve observability (metrics/logging/tracing)
+- Add caching and rate limiting
+- Enable TLS and reverse proxy controls
+
+## 9. Tradeoffs
+
+- Simpler startup path was prioritized over operational complexity.
+- Abstractions are in place, but some providers remain intentionally minimal.
+- Suitable for assessment/demo and structured expansion to production.
