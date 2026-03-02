@@ -82,14 +82,15 @@ export default function LLMChatPage() {
   };
 
   return (
-    <main className="p-8 max-w-3xl mx-auto">
+    <main className="page-shell max-w-4xl">
+      <section className="panel p-6">
       <h1 className="text-2xl font-bold mb-4">LLM Chat</h1>
 
       <div className={`inline-block px-3 py-1 rounded text-sm font-medium ${statusTone}`}>
         {statusLoading ? "Checking LLM..." : status.connected ? "LLM Connected" : "LLM Disconnected"}
       </div>
 
-      <div className="mt-3 text-sm text-gray-700">
+      <div className="mt-3 text-sm text-slate-700">
         <p>Provider: {status.llm_provider || "unknown"}</p>
         <p>LLM URL: {status.llm_url || "unknown"}</p>
         <p>Configured model: {status.configured_model || "unknown"}</p>
@@ -100,16 +101,16 @@ export default function LLMChatPage() {
         {status.error && <p className="text-red-600">Error: {status.error}</p>}
       </div>
 
-      <div className="mt-6 border rounded p-4 h-[420px] overflow-y-auto bg-white">
+      <div className="mt-6 rounded-xl border border-slate-200 p-4 h-[420px] overflow-y-auto bg-white">
         {messages.length === 0 && (
-          <p className="text-gray-500 text-sm">Start a conversation with the LLM.</p>
+          <p className="text-slate-500 text-sm">Start a conversation with the LLM.</p>
         )}
         <div className="space-y-3">
           {messages.map((msg, idx) => (
             <div
               key={`${msg.role}-${idx}`}
               className={`p-3 rounded text-sm whitespace-pre-wrap ${
-                msg.role === "user" ? "bg-blue-50" : "bg-gray-100"
+                msg.role === "user" ? "bg-blue-50" : "bg-slate-100"
               }`}
             >
               <p className="font-medium mb-1">{msg.role === "user" ? "You" : "LLM"}</p>
@@ -124,18 +125,19 @@ export default function LLMChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask something..."
-          className="flex-1 border rounded p-2"
+          className="input-field"
         />
         <button
           type="submit"
           disabled={sending}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          className="btn btn-primary disabled:opacity-50"
         >
           {sending ? "Sending..." : "Send"}
         </button>
       </form>
 
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      </section>
     </main>
   );
 }

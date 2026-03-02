@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   borrowBook,
   createReview,
   deleteBook,
+  getBookAnalysis,
   getBookDownloadUrl,
   getBookViewUrl,
   refreshBookSummary,
@@ -16,6 +17,7 @@ type BookCardProps = {
   id: number;
   title: string;
   author?: string;
+  description?: string;
   summary?: string;
   summaryStatus?: "pending" | "ready" | "failed";
   currentBorrower?: string | null;
@@ -30,6 +32,7 @@ export default function BookCard({
   id,
   title,
   author,
+  description,
   summary,
   summaryStatus,
   currentBorrower,
@@ -42,6 +45,57 @@ export default function BookCard({
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [refreshingSummary, setRefreshingSummary] = useState(false);
+  const [analysis, setAnalysis] = useState<{ average_sentiment: number | null; review_count: number }>({
+    average_sentiment: null,
+    review_count: 0,
+  });
+
+  const consensusText = useMemo(() => {
+    const raw = description || "";
+    const marker = "Consensus Summary:\n";
+    const idx = raw.indexOf(marker);
+    if (idx === -1) return "";
+    return raw.slice(idx + marker.length).trim();
+  }, [description]);
+
+  const sentimentBadge = useMemo(() => {
+    const score = analysis.average_sentiment;
+    if (score === null || Number.isNaN(score)) {
+      return {
+        label: "Trend: Unknown",
+        className: "bg-gray-200 text-gray-700",
+      };
+    }
+    if (score >= 0.2) {
+      return {
+        label: "Trend: Positive",
+        className: "bg-green-100 text-green-700",
+      };
+    }
+    if (score <= -0.2) {
+      return {
+        label: "Trend: Negative",
+        className: "bg-red-100 text-red-700",
+      };
+    }
+    return {
+      label: "Trend: Neutral",
+      className: "bg-amber-100 text-amber-700",
+    };
+  }, [analysis.average_sentiment]);
+
+  const loadAnalysis = async () => {
+    try {
+      const data = await getBookAnalysis(id);
+      setAnalysis(data);
+    } catch {
+      // keep UI resilient when analysis is temporarily unavailable
+    }
+  };
+
+  useEffect(() => {
+    loadAnalysis();
+  }, [id]);
 
   const handleBorrow = async () => {
     setError("");
@@ -72,6 +126,8 @@ export default function BookCard({
       await createReview({ bookId: id, rating, comment });
       setMessage("Review submitted.");
       setComment("");
+      await loadAnalysis();
+      router.refresh();
     } catch (err: any) {
       setError(err?.response?.data?.detail || "Unable to submit review.");
     }
@@ -110,46 +166,63 @@ export default function BookCard({
   };
 
   return (
-    <div className="p-4 border rounded shadow-sm">
-      <h2 className="text-xl font-semibold">{title}</h2>
-      {author && <p className="text-sm text-gray-600">by {author}</p>}
+    <div className="panel p-5">
+      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+      {author && <p className="text-sm text-slate-600">by {author}</p>}
       {summaryStatus === "pending" && (
         <p className="mt-2 text-sm text-amber-700">Summary is being generated...</p>
       )}
       {summaryStatus === "failed" && (
         <p className="mt-2 text-sm text-red-600">Summary generation failed.</p>
       )}
-      {summary && <p className="mt-2 text-gray-800">{summary}</p>}
-      <p className="mt-2 text-sm text-gray-700">
+      {summary && <p className="mt-2 text-slate-800 leading-relaxed">{summary}</p>}
+
+      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+        <p className="font-medium text-slate-800">Rolling Consensus</p>
+        <span className={`inline-block mt-2 rounded px-2 py-1 text-xs font-medium ${sentimentBadge.className}`}>
+          {sentimentBadge.label}
+        </span>
+        <p className="text-slate-700">
+          Reviews analyzed: {analysis.review_count} | Average sentiment:{" "}
+          {analysis.average_sentiment === null ? "N/A" : analysis.average_sentiment.toFixed(2)}
+        </p>
+        {consensusText ? (
+          <p className="mt-1 whitespace-pre-wrap text-slate-700">{consensusText}</p>
+        ) : (
+          <p className="mt-1 text-slate-500">Consensus will appear as reviews come in.</p>
+        )}
+      </div>
+
+      <p className="mt-2 text-sm text-slate-700">
         {currentBorrower ? `Currently borrowed by: ${currentBorrower}` : "Currently available"}
       </p>
 
-      <div className="mt-4 flex gap-2">
-        <button onClick={handleBorrow} className="px-3 py-1 bg-blue-600 text-white rounded">
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button onClick={handleBorrow} className="btn btn-primary">
           Borrow
         </button>
-        <button onClick={handleReturn} className="px-3 py-1 bg-gray-700 text-white rounded">
+        <button onClick={handleReturn} className="btn btn-secondary">
           Return
         </button>
         <a
           href={getBookViewUrl(id)}
           target="_blank"
           rel="noreferrer"
-          className="px-3 py-1 bg-indigo-600 text-white rounded"
+          className="btn bg-indigo-700 text-white"
         >
           View
         </a>
         <a
           href={getBookDownloadUrl(id)}
           download
-          className="px-3 py-1 bg-slate-800 text-white rounded"
+          className="btn bg-slate-800 text-white"
         >
           Download
         </a>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="px-3 py-1 bg-red-700 text-white rounded disabled:opacity-50"
+          className="btn btn-danger disabled:opacity-50"
         >
           {deleting ? "Deleting..." : "Delete"}
         </button>
@@ -157,7 +230,7 @@ export default function BookCard({
           <button
             onClick={handleRefreshSummary}
             disabled={refreshingSummary}
-            className="px-3 py-1 bg-amber-600 text-white rounded disabled:opacity-50"
+            className="btn btn-warning disabled:opacity-50"
           >
             {refreshingSummary ? "Retrying..." : "Retry Summary"}
           </button>
@@ -167,12 +240,12 @@ export default function BookCard({
       <div className="mt-4 space-y-2">
         <p className="text-sm font-medium">Previous comments</p>
         {previousReviews.length === 0 && (
-          <p className="text-sm text-gray-500">No comments yet.</p>
+          <p className="text-sm text-slate-500">No comments yet.</p>
         )}
         {previousReviews.map((review, idx) => (
-          <div key={`${id}-review-${idx}`} className="rounded border p-2 text-sm">
-            <p className="text-gray-800">{review.comment}</p>
-            <p className="mt-1 text-gray-600">
+          <div key={`${id}-review-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2 text-sm">
+            <p className="text-slate-800">{review.comment}</p>
+            <p className="mt-1 text-slate-600">
               {review.reviewer} - {review.rating}/5
             </p>
           </div>
@@ -184,7 +257,7 @@ export default function BookCard({
         <select
           value={rating}
           onChange={(e) => setRating(Number(e.target.value))}
-          className="p-2 border rounded"
+          className="input-field"
         >
           <option value={1}>1</option>
           <option value={2}>2</option>
@@ -196,15 +269,15 @@ export default function BookCard({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder="Optional comment"
-          className="w-full p-2 border rounded"
+          className="input-field"
           rows={2}
         />
-        <button onClick={handleReview} className="px-3 py-1 bg-green-600 text-white rounded">
+        <button onClick={handleReview} className="btn bg-emerald-700 text-white">
           Submit Review
         </button>
       </div>
 
-      {message && <p className="mt-3 text-sm text-green-700">{message}</p>}
+      {message && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </div>
   );

@@ -50,33 +50,35 @@ export default function NewBookPage() {
   };
 
   return (
-    <main className="p-8 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Upload Book</h1>
+    <main className="page-shell max-w-2xl">
+      <section className="panel p-6">
+      <h1 className="text-2xl font-bold mb-1">Upload Book</h1>
+      <p className="text-sm text-slate-600 mb-4">Add a PDF or TXT file to ingest and summarize.</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title"
-          className="w-full p-2 border rounded"
+          className="input-field"
         />
         <input
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
           placeholder="Author (optional)"
-          className="w-full p-2 border rounded"
+          className="input-field"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description (optional)"
-          className="w-full p-2 border rounded"
+          className="input-field"
           rows={3}
         />
         <input
           type="file"
           accept=".txt,.pdf,text/plain,application/pdf"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="w-full p-2 border rounded"
+          className="input-field"
         />
 
         {error && <p className="text-red-600">{error}</p>}
@@ -84,11 +86,12 @@ export default function NewBookPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          className="btn btn-primary disabled:opacity-50"
         >
           {submitting ? "Uploading..." : "Upload"}
         </button>
       </form>
+      </section>
     </main>
   );
 }

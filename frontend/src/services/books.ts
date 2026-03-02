@@ -21,8 +21,22 @@ export type BookListResponse = {
   page: number;
 };
 
+export type RecommendationResponse = {
+  items: Book[];
+};
+
+export type BookAnalysis = {
+  average_sentiment: number | null;
+  review_count: number;
+};
+
 export async function getBooks(page = 1) {
   const { data } = await api.get<BookListResponse>(`/books/?page=${page}`);
+  return data;
+}
+
+export async function getRecommendations() {
+  const { data } = await api.get<RecommendationResponse>(`/books/recommendations`);
   return data;
 }
 
@@ -65,6 +79,11 @@ export async function createReview(params: {
     rating: params.rating,
     comment: params.comment || null,
   });
+  return data;
+}
+
+export async function getBookAnalysis(bookId: number) {
+  const { data } = await api.get<BookAnalysis>(`/books/${bookId}/analysis`);
   return data;
 }
 

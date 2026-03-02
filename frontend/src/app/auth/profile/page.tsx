@@ -26,13 +26,14 @@ export default function ProfilePage() {
     }
   };
 
-  if (!token) return <p>Please log in first.</p>;
+  if (!token) return <main className="page-shell"><p className="panel p-5 text-slate-600">Please log in first.</p></main>;
 
   return (
-    <main className="p-8 max-w-md mx-auto">
+    <main className="page-shell max-w-xl">
+      <section className="panel p-6">
       <h1 className="text-2xl font-bold mb-4">Profile</h1>
       {user && (
-        <div className="mb-4">
+        <div className="mb-4 text-slate-700">
           <p>Email: {user.email}</p>
           <p>Name: {user.full_name || "(none)"}</p>
         </div>
@@ -43,16 +44,17 @@ export default function ProfilePage() {
           placeholder="Full Name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="w-full p-2 border rounded"
+          className="input-field"
         />
         {error && <p className="text-red-600">{error}</p>}
-        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+        <button type="submit" className="btn btn-primary">
           Update
         </button>
       </form>
-      <button onClick={logout} className="mt-4 text-sm text-red-600">
+      <button onClick={logout} className="mt-4 text-sm font-medium text-red-700">
         Sign out
       </button>
+      </section>
     </main>
   );
 }

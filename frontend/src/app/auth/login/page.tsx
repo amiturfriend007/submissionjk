@@ -22,28 +22,31 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="p-8 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
+    <main className="page-shell max-w-xl">
+      <section className="panel p-6">
+      <h1 className="text-2xl font-bold mb-1">Login</h1>
+      <p className="text-sm text-slate-600 mb-4">Sign in to borrow books and get personalized recommendations.</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 border rounded"
+          className="input-field"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded"
+          className="input-field"
         />
         {error && <p className="text-red-600">{error}</p>}
-        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+        <button type="submit" className="btn btn-primary">
           Login
         </button>
       </form>
+      </section>
     </main>
   );
 }
